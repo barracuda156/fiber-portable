@@ -24,7 +24,7 @@ option(FIBER_SHARED "build shared fiber library" ${BUILD_SHARED_LIBS})
 
 option(FIBER_ASM_CHECK_ALIGNMENT "add extra stack alignment checks to asm functions" True)
 
-option(FIBER_M32 "force 32bit compile on x86 via -m32" False)
+option(FIBER_M32 "force 32bit compile on 64bit platform via -m32" False)
 
 if(NOT COMMAND check_ipo_supported)
   include(CheckIPOSupported)
@@ -84,6 +84,8 @@ elseif(CMU_OS_POSIX AND CMU_ARCH_RISCV)
   set(asm_sources src/fiber_asm_riscv_elf.S)
 elseif(CMU_OS_POSIX AND CMU_ARCH_PPC AND FIBER_BITS_64 AND CMU_LITTLE_ENDIAN)
   set(asm_sources src/fiber_asm_ppc64le_elf2.S)
+elseif(APPLE AND CMU_ARCH_PPC AND FIBER_BITS_32)
+  set(asm_sources src/fiber_asm_ppc_darwin.S)
 endif()
 
 if(CMU_COMP_MSVC)
@@ -98,6 +100,11 @@ endif()
 if(FIBER_M32)
   list(APPEND cflags "-m32")
   list(APPEND ldflags "-m32")
+endif()
+
+if(APPLE AND CMU_ARCH_PPC)
+  list(APPEND cflags "-force_cpusubtype_ALL")
+  list(APPEND ldflags "-force_cpusubtype_ALL")
 endif()
 
 enable_language(${asm_lang})
